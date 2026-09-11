@@ -2189,6 +2189,12 @@ class DirectDownloadSource(ReleaseSource):
                 try:
                     results = search_books(isbn, filters)
                     if results:
+                        # Fetch download counts for results
+                        if results:
+                            ids = [r.id for r in results]
+                            counts = _fetch_download_counts_batch(ids)
+                            for record in results:
+                                record.downloads = counts.get(record.id)
                         logger.info("Found %s releases via ISBN", len(results))
                         self._last_search_type = "isbn"
                         return [_browse_record_to_release(record) for record in results]
@@ -2255,6 +2261,13 @@ class DirectDownloadSource(ReleaseSource):
                     raise
                 except Exception:
                     logger.exception("Search error")
+
+        # Fetch download counts for all results
+        if all_results:
+            ids = [r.id for r in all_results]
+            counts = _fetch_download_counts_batch(ids)
+            for record in all_results:
+                record.downloads = counts.get(record.id)
 
         return [_browse_record_to_release(record) for record in all_results]
 
