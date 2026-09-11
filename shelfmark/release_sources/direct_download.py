@@ -55,6 +55,77 @@ if TYPE_CHECKING:
 
 logger = setup_logger(__name__)
 
+# Cache for download counts
+_download_counts_cache: dict[str, int | None] = {}
+_download_counts_lock = threading.Lock()
+
+
+def _fetch_download_count(id: str) -> int | None:
+    """Fetch the download count for a single book from Anna's Archive."""
+    with _download_counts_lock:
+        if id in _download_counts_cache:
+            return _download_counts_cache[id]
+
+    try:
+        url = f"https://annas-archive.org/libgen.php?req={id}"
+        resp = requests.get(url, timeout=5, headers={"Accept": "application/json"})
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, list) and len(data) > 0:
+                count = data[0].get("downloads")
+                if count is not None:
+                    with _download_counts_lock:
+                        _download_counts_cache[id] = count
+                    return count
+    except Exception:
+        logger.debug("Failed to fetch download count for %s", id, exc_info=True)
+
+    with _download_counts_lock:
+        _download_counts_cache[id] = None
+    return None
+
+
+def _fetch_download_counts_batch(ids: list[str]) -> dict[str, int | None]:
+    """Fetch download counts for multiple books in batch."""
+    if not ids:
+        return {}
+
+    results: dict[str, int | None] = {}
+    with _download_counts_lock:
+        cached = {k: v for k, v in _download_counts_cache.items() if k in ids}
+        results.update(cached)
+        uncached = [id for id in ids if id not in _download_counts_cache]
+
+    if not uncached:
+        return results
+
+    try:
+        url = "https://annas-archive.org/libgen.php"
+        params = {"ids": ",".join(uncached)}
+        resp = requests.get(url, params=params, timeout=10, headers={"Accept": "application/json"})
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, list):
+                for item in data:
+                    if isinstance(item, dict):
+                        book_id = item.get("id", "")
+                        count = item.get("downloads")
+                        if book_id:
+                            results[book_id] = count
+                            with _download_counts_lock:
+                                _download_counts_cache[book_id] = count
+    except Exception:
+        logger.debug("Failed to fetch download counts batch", exc_info=True)
+
+    # Mark uncached IDs as None
+    for id in uncached:
+        if id not in results:
+            results[id] = None
+            with _download_counts_lock:
+                _download_counts_cache[id] = None
+
+    return results
+
 
 class SourcePriorityEntry(TypedDict):
     """Normalized source priority entry from config."""
@@ -1941,6 +2012,7 @@ def _browse_record_to_release(record: BrowseRecord) -> Release:
             "description": record.description,
             "download_urls": record.download_urls,
             "info": record.info,
+            "downloads": record.downloads,
         },
     )
 
