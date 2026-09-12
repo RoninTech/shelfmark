@@ -1,5 +1,6 @@
 """Direct download source - Anna's Archive/Libgen with fallback cascade."""
 
+import concurrent.futures
 import itertools
 import json
 import re
@@ -60,33 +61,32 @@ _download_counts_cache: dict[str, int | None] = {}
 _download_counts_lock = threading.Lock()
 
 
-def _fetch_download_count(id: str) -> int | None:
+def _fetch_download_count(book_id: str) -> int | None:
     """Fetch the download count for a single book from Anna's Archive."""
     with _download_counts_lock:
-        if id in _download_counts_cache:
-            return _download_counts_cache[id]
+        if book_id in _download_counts_cache:
+            return _download_counts_cache[book_id]
 
     try:
-        url = f"https://annas-archive.org/libgen.php?req={id}"
+        url = f"{network.get_aa_base_url()}/dyn/md5/inline_info/{book_id}"
         resp = requests.get(url, timeout=5, headers={"Accept": "application/json"})
         if resp.status_code == 200:
             data = resp.json()
-            if isinstance(data, list) and len(data) > 0:
-                count = data[0].get("downloads")
-                if count is not None:
-                    with _download_counts_lock:
-                        _download_counts_cache[id] = count
-                    return count
+            count = data.get("downloads_total")
+            if count is not None:
+                with _download_counts_lock:
+                    _download_counts_cache[book_id] = count
+                return count
     except Exception:
-        logger.debug("Failed to fetch download count for %s", id, exc_info=True)
+        logger.debug("Failed to fetch download count for %s", book_id, exc_info=True)
 
     with _download_counts_lock:
-        _download_counts_cache[id] = None
+        _download_counts_cache[book_id] = None
     return None
 
 
 def _fetch_download_counts_batch(ids: list[str]) -> dict[str, int | None]:
-    """Fetch download counts for multiple books in batch."""
+    """Fetch download counts for multiple books in parallel (5 workers)."""
     if not ids:
         return {}
 
@@ -94,35 +94,46 @@ def _fetch_download_counts_batch(ids: list[str]) -> dict[str, int | None]:
     with _download_counts_lock:
         cached = {k: v for k, v in _download_counts_cache.items() if k in ids}
         results.update(cached)
-        uncached = [id for id in ids if id not in _download_counts_cache]
+        uncached = [book_id for book_id in ids if book_id not in _download_counts_cache]
 
     if not uncached:
         return results
 
+    def _fetch_single(book_id: str) -> tuple[str, int | None]:
+        """Fetch a single download count, returning (book_id, count) tuple."""
+        try:
+            url = f"{network.get_aa_base_url()}/dyn/md5/inline_info/{book_id}"
+            resp = requests.get(url, timeout=5, headers={"Accept": "application/json"})
+            if resp.status_code == 200:
+                data = resp.json()
+                count = data.get("downloads_total")
+                with _download_counts_lock:
+                    _download_counts_cache[book_id] = count
+                return (book_id, count)
+        except Exception:
+            logger.debug("Failed to fetch download count for %s", book_id, exc_info=True)
+        with _download_counts_lock:
+            _download_counts_cache[book_id] = None
+        return (book_id, None)
+
     try:
-        url = "https://annas-archive.org/libgen.php"
-        params = {"ids": ",".join(uncached)}
-        resp = requests.get(url, params=params, timeout=10, headers={"Accept": "application/json"})
-        if resp.status_code == 200:
-            data = resp.json()
-            if isinstance(data, list):
-                for item in data:
-                    if isinstance(item, dict):
-                        book_id = item.get("id", "")
-                        count = item.get("downloads")
-                        if book_id:
-                            results[book_id] = count
-                            with _download_counts_lock:
-                                _download_counts_cache[book_id] = count
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(_fetch_single, book_id): book_id for book_id in uncached}
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    book_id, count = future.result()
+                    results[book_id] = count
+                except Exception:  # noqa: BLE001 - intentional fallback for fault tolerance
+                    book_id = futures[future]
+                    results[book_id] = None
     except Exception:
         logger.debug("Failed to fetch download counts batch", exc_info=True)
-
-    # Mark uncached IDs as None
-    for id in uncached:
-        if id not in results:
-            results[id] = None
-            with _download_counts_lock:
-                _download_counts_cache[id] = None
+        # Fallback: mark all uncached IDs as None
+        for book_id in uncached:
+            if book_id not in results:
+                results[book_id] = None
+                with _download_counts_lock:
+                    _download_counts_cache[book_id] = None
 
     return results
 
@@ -2174,6 +2185,11 @@ class DirectDownloadSource(ReleaseSource):
                 query, filters, search_label="manual"
             )
             self._last_search_type = "manual" if query else "title_author"
+            if results:
+                ids = [r.id for r in results]
+                counts = _fetch_download_counts_batch(ids)
+                for record in results:
+                    record.downloads = counts.get(record.id)
             return [_browse_record_to_release(record) for record in results]
 
         # ISBN search first (unless expand_search requested)
