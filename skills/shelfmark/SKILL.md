@@ -17,31 +17,35 @@ Use this skill to search for and download books from a local Shelfmark instance 
 ## Quick Start
 
 ```bash
+# Show help information for download script
+python3 /home/username/.agents/skills/shelfmark/download_books.py -h
+
 # Download a single book
-python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py '[{"title": "The Seven Husbands of Evelyn Hugo", "author": "Taylor Jenkins Reid"}]'
+python3 /home/username/.agents/skills/shelfmark/download_books.py '[{"title": "The Great Gatsby", "author": "F. Scott Fitzgerald"}]'
 
 # Download multiple books
-python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py '[{"title": "The Seven Husbands of Evelyn Hugo", "author": "Taylor Jenkins Reid"}, {"title": "Lessons in Chemistry", "author": "Bonnie Garmus"}, {"title": "Anxious People", "author": "Fredrik Backman"}]'
+python3 /home/username/.agents/skills/shelfmark/download_books.py '[{"title": "The Great Gatsby", "author": "F. Scott Fitzgerald"}, {"title": "Oliver Twist", "author": "Charles Dickens"}, {"title": "Frankenstein", "author": "Marry Shelley"}]'
 
 # Check calibre database before downloading (skip if already present)
-python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py --check-calibre '[{"title": "Dune", "author": "Frank Herbert"}]'
+python3 /home/username/.agents/skills/shelfmark/download_books.py --check-calibre '[{"title": "Frankenstein", "author": "Marry Shelley"}]'
 
 # Load books from a JSON file
-python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py --file books.json
+python3 /home/username/.agents/skills/shelfmark/download_books.py --file books.json
 ```
 
 The JSON file (`books.json`) should contain an array of book objects:
 
 ```json
 [
-  {"title": "Dune", "author": "Frank Herbert"},
-  {"title": "1984", "author": "George Orwell"}
+  {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald"},
+  {"title": "Frankenstein", "author": "Mary Shelley"},
+  {"title": "Oliver Twist", "author": "Charles Dickens"}
 ]
 ```
 
-Array format is also supported: `[["Dune", "Frank Herbert"], ["1984", "George Orwell"]]`
+Array format is also supported: `[["The Great Gatsby", "F. Scott Fitzgerald"], ["Oliver Twist", "Charles Dickens"], ["Frankenstein", "Marry Shelley"]]`
 
-Title-only (no author) is supported: `["Dune"]`
+Title-only (no author) is supported: `["Frankenstein"]`
 
 ## Key Characteristics
 
@@ -161,7 +165,7 @@ page.wait_for_timeout(2000)
 Use `--check-calibre` (or `-c`) to check if books are already in your calibre database before downloading:
 
 ```bash
-python3 download_books.py --check-calibre '[{"title": "Dune", "author": "Frank Herbert"}]'
+python3 download_books.py --check-calibre '[{"title": "Frankenstein", "author": "Mary Shelley"}]'
 ```
 
 Books found in calibre are skipped with a message. If all books are already present, the script exits early without launching the browser.
@@ -176,7 +180,7 @@ Books found in calibre are skipped with a message. If all books are already pres
 - **Book titles may include series info** in brackets, e.g., `(The Locked Tomb Trilogy)`
 - **Use `page.evaluate_handle`** to get parent element HTML for parsing — the button's `parentElement.parentElement` contains the card content
 - **Title matching** prefers exact matches over partial matches (e.g., "Yesteryear" matches "Yesteryear: A Novel" but not "The Piers of Yesteryear")
-- **Books are passed as JSON** — use `--check-calibre` to skip books already in your calibre database
+- **Books are passed as JSON** — use `--check-calibre` to optionally skip books already in your calibre database
 
 ## Common Issues
 
