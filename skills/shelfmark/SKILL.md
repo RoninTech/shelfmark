@@ -18,14 +18,30 @@ Use this skill to search for and download books from a local Shelfmark instance 
 
 ```bash
 # Download a single book
-python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py "The Seven Husbands of Evelyn Hugo: Taylor Jenkins Reid"
+python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py '[{"title": "The Seven Husbands of Evelyn Hugo", "author": "Taylor Jenkins Reid"}]'
 
 # Download multiple books
-python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py \
-  "The Seven Husbands of Evelyn Hugo: Taylor Jenkins Reid" \
-  "Lessons in Chemistry: Bonnie Garmus" \
-  "Anxious People: Fredrik Backman"
+python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py '[{"title": "The Seven Husbands of Evelyn Hugo", "author": "Taylor Jenkins Reid"}, {"title": "Lessons in Chemistry", "author": "Bonnie Garmus"}, {"title": "Anxious People", "author": "Fredrik Backman"}]'
+
+# Check calibre database before downloading (skip if already present)
+python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py --check-calibre '[{"title": "Dune", "author": "Frank Herbert"}]'
+
+# Load books from a JSON file
+python3 /home/paul-rimmer/.agents/skills/shelfmark/download_books.py --file books.json
 ```
+
+The JSON file (`books.json`) should contain an array of book objects:
+
+```json
+[
+  {"title": "Dune", "author": "Frank Herbert"},
+  {"title": "1984", "author": "George Orwell"}
+]
+```
+
+Array format is also supported: `[["Dune", "Frank Herbert"], ["1984", "George Orwell"]]`
+
+Title-only (no author) is supported: `["Dune"]`
 
 ## Key Characteristics
 
@@ -140,6 +156,16 @@ page.evaluate('''
 page.wait_for_timeout(2000)
 ```
 
+### Checking Calibre Database
+
+Use `--check-calibre` (or `-c`) to check if books are already in your calibre database before downloading:
+
+```bash
+python3 download_books.py --check-calibre '[{"title": "Dune", "author": "Frank Herbert"}]'
+```
+
+Books found in calibre are skipped with a message. If all books are already present, the script exits early without launching the browser.
+
 ## Important Notes
 
 - **Always click the article element first** before clicking the download button — the React SPA requires this to properly initialize the download workflow
@@ -150,6 +176,7 @@ page.wait_for_timeout(2000)
 - **Book titles may include series info** in brackets, e.g., `(The Locked Tomb Trilogy)`
 - **Use `page.evaluate_handle`** to get parent element HTML for parsing — the button's `parentElement.parentElement` contains the card content
 - **Title matching** prefers exact matches over partial matches (e.g., "Yesteryear" matches "Yesteryear: A Novel" but not "The Piers of Yesteryear")
+- **Books are passed as JSON** — use `--check-calibre` to skip books already in your calibre database
 
 ## Common Issues
 
@@ -162,3 +189,4 @@ page.wait_for_timeout(2000)
 | Sidebar shows "No activity" after click | Ensure you clicked the `<h3>` element first, and wait at least 2 seconds before checking |
 | Search results don't update between books | Navigate to `http://localhost:8084/` before each new search to reset SPA state |
 | Book downloaded is wrong title | The script prefers exact title matches — if the title is ambiguous, the author search will help narrow it down |
+| Books passed incorrectly | Books must be valid JSON — use `{"title": "...", "author": "..."}` format, not `Title: Author` |
