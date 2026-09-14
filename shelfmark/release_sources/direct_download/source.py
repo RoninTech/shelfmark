@@ -114,8 +114,8 @@ class DirectDownloadSource(ReleaseSource):
     def get_column_config(self) -> ReleaseColumnConfig:
         """Column configuration for Direct Download source.
 
-        Shows language, format, and size badges for each release.
-        Language is hidden on mobile; format and size are shown.
+        Shows language, format, size, and downloads for each release.
+        Language, format, size, and downloads are all shown on mobile.
         """
         return ReleaseColumnConfig(
             columns=[
@@ -147,8 +147,16 @@ class DirectDownloadSource(ReleaseSource):
                     width="80px",
                     hide_mobile=False,  # Size shown on mobile
                 ),
+                ColumnSchema(
+                    key="extra.downloads",
+                    label="Downloads",
+                    render_type=ColumnRenderType.NUMBER,
+                    align=ColumnAlign.CENTER,
+                    width="80px",
+                    hide_mobile=False,  # Downloads shown on mobile
+                ),
             ],
-            grid_template="minmax(0,2fr) 60px 80px 80px",
+            grid_template="minmax(0,2fr) 60px 80px 80px 80px",
             supported_filters=["format", "language"],  # AA has reliable language metadata
         )
 
