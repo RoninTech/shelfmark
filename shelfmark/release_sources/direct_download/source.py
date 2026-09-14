@@ -37,6 +37,21 @@ if TYPE_CHECKING:
 logger = setup_logger(__name__)
 
 
+def _extract_downloads(record: BrowseRecord) -> int | None:
+    """Extract download count from record info for Release.extra.downloads."""
+    downloads = None
+    if record.info and "Downloads" in record.info:
+        downloads_value = record.info["Downloads"]
+        if isinstance(downloads_value, list) and len(downloads_value) > 0:
+            try:
+                downloads = int(downloads_value[0])
+            except (ValueError, TypeError):
+                pass
+        elif isinstance(downloads_value, (int, float)):
+            downloads = int(downloads_value)
+    return downloads
+
+
 def _browse_record_to_release(record: BrowseRecord) -> Release:
     """Convert a browse record to a Release object.
 
@@ -67,6 +82,7 @@ def _browse_record_to_release(record: BrowseRecord) -> Release:
             "download_urls": record.download_urls,
             "info": record.info,
             "direct_download_provider": provider_id,
+            "downloads": _extract_downloads(record),
             # Kept for older frontends and persisted request payloads.
             "web_provider": provider_id if provider_id != "annas_archive" else None,
         },
