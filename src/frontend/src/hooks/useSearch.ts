@@ -282,9 +282,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
           // appear first.
           const effectiveSort = sort ?? advancedFilters.sort;
           const isDownloadsSort = !effectiveSort || effectiveSort === 'downloads';
-          const sorted = isDownloadsSort
-            ? sortBooksByDownloads(results)
-            : results;
+          const sorted = isDownloadsSort ? sortBooksByDownloads(results) : results;
           setBooks(sorted);
         } else {
           showToast('No results found', 'error');
@@ -300,7 +298,14 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
         setIsSearching(false);
       }
     },
-    [showToast, searchFieldValues, handleSearchError, contentType, advancedFilters, sortBooksByDownloads],
+    [
+      showToast,
+      searchFieldValues,
+      handleSearchError,
+      contentType,
+      advancedFilters,
+      sortBooksByDownloads,
+    ],
   );
 
   const handleResetSearch = useCallback(

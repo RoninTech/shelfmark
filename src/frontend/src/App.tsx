@@ -847,9 +847,7 @@ function App() {
 
         // Determine the default sort based on search mode
         const defaultSort =
-          cfg.search_mode === 'universal'
-            ? resolvedMetadataDefaultSort
-            : cfg.default_sort ?? '';
+          cfg.search_mode === 'universal' ? resolvedMetadataDefaultSort : (cfg.default_sort ?? '');
 
         if (cfg?.supported_formats) {
           // Seeding the defaults must not undo filters a shared link already applied.
@@ -2030,7 +2028,7 @@ function App() {
   const urlHashDefaultSort =
     effectiveSearchMode === 'universal'
       ? resolvedMetadataDefaultSort
-      : config?.default_sort ?? '';
+      : (config?.default_sort ?? '');
 
   // Keep the URL hash fragment live as search state changes. Gated until any URL-driven
   // bootstrap has applied (or there was nothing to apply), so we don't clobber a shared
