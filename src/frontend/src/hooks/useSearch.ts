@@ -109,7 +109,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
   }, []);
 
   // Sort books by downloads descending (no downloads go to the end)
-  const sortBooksByDownloads = (bookList: Book[]): Book[] => {
+  const sortBooksByDownloads = useCallback((bookList: Book[]): Book[] => {
     const sorted = bookList.toSorted((a, b) => {
       const aDownloads = a.downloads ?? 0;
       const bDownloads = b.downloads ?? 0;
@@ -119,7 +119,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
       return bDownloads - aDownloads;
     });
     return sorted;
-  };
+  }, []);
 
   // Re-sort current books by downloads descending (client-side only, no search)
   const reSortByDownloads = useCallback(() => {
@@ -199,7 +199,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
         const hasFieldValues = Object.values(effectiveFieldValues).some(
           (v) => v !== '' && v !== false,
         );
-        const sort = params.get('sort') || 'relevance';
+        const sortOrder = params.get('sort') || 'relevance';
 
         if (!searchQuery && !hasFieldValues) {
           setBooks([]);
@@ -224,7 +224,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
           const result = await searchMetadata(
             searchQuery,
             40,
-            sort,
+            sortOrder,
             effectiveFieldValues,
             1,
             effectiveContentType,
@@ -243,7 +243,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
             // Store params for loadMore
             lastSearchParamsRef.current = {
               query: searchQuery,
-              sort,
+              sort: sortOrder,
               fieldValues: effectiveFieldValues,
               providerOverride,
               contentType: effectiveContentType,
@@ -300,7 +300,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
         setIsSearching(false);
       }
     },
-    [showToast, searchFieldValues, handleSearchError, contentType, sortBooksByDownloads],
+    [showToast, searchFieldValues, handleSearchError, contentType, advancedFilters, sortBooksByDownloads],
   );
 
   const handleResetSearch = useCallback(
