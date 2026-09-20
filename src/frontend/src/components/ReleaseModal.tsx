@@ -1769,7 +1769,7 @@ const ReleaseModalSession = ({
                 </div>
               )}
               {!sourcesLoading && allTabs.length > 0 && (
-                <div className="flex items-center justify-between px-5">
+                <div className="flex items-center px-5">
                   {/* Tabs - scrollable on narrow screens */}
                   <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
                     <div className="relative flex gap-1">
@@ -1801,7 +1801,26 @@ const ReleaseModalSession = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 pr-1 pl-2">
+                  {/* Center: Results count from release sources */}
+                  <div className="flex-1 flex justify-center">
+                    {(() => {
+                      const searchInfo = releasesBySource[activeTab]?.search_info?.[activeTab];
+                      const totalCount = searchInfo?.total_results;
+                      if (totalCount === undefined || totalCount === null || totalCount === 0) return null;
+                      const isCapped = totalCount === '500+';
+                      const displayCount = isCapped ? '500+' : String(totalCount);
+                      const pages = isCapped ? Math.ceil(500 / 50) : Math.ceil(Number(totalCount) / 50);
+                      const downloadStr = (isCapped || Number(totalCount) !== 1) ? 'Downloads' : 'Download';
+                      return (
+                        <span className="mx-2 shrink-0 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                          Search Returned {displayCount} {downloadStr} in {pages}{isCapped ? '+' : ''} Page{pages !== 1 ? 's' : ''}
+                        </span>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Right: Controls */}
+                  <div className="flex items-center gap-3 pr-1 pl-2 ml-auto">
                     {/* Multi-book pack toggle (fallback for releases that can't be inspected) */}
                     {!isCombinedMode && (
                       <button

@@ -110,6 +110,12 @@ class DirectDownloadSource(ReleaseSource):
         provider = registry.provider_by_id("annas_archive", self._providers)
         return str(getattr(provider, "last_search_type", "title_author"))
 
+    @property
+    def total_results(self) -> int | None:
+        """Returns the total result count from the last search."""
+        provider = registry.provider_by_id("annas_archive", self._providers)
+        return getattr(provider, "total_results", None)
+
     def get_column_config(self) -> ReleaseColumnConfig:
         """Column configuration for Direct Download source.
 

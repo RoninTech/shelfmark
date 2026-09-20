@@ -687,7 +687,23 @@ def _fetch_search_table_uncached(
     return "", None
 
 
-def search_books(query: str, filters: SearchFilters) -> list[BrowseRecord]:
+def _extract_total_results_from_html(html: str) -> int | str | None:
+    """Extract the total results count from Anna's Archive search page HTML.
+
+    AA renders a summary like: Results 1-50 (92 total)
+    Or for 500+ results: Results 1-50 (500+ total)
+    Returns the total count as int, or "500+" for capped results, or None if not found.
+    """
+    match = re.search(r"Results\s+\d+\s*-\s*\d+\s*\((\d+(?:\+\s*)?)\s+total\)", html)
+    if match:
+        raw = match.group(1)
+        if "+" in raw:
+            return "500+"
+        return int(raw)
+    return None
+
+
+def search_books(query: str, filters: SearchFilters) -> tuple[list[BrowseRecord], int | None]:
     """Search for books matching the query.
 
     Args:
@@ -695,7 +711,7 @@ def search_books(query: str, filters: SearchFilters) -> list[BrowseRecord]:
         filters: Search filters (language, format, content type, etc.)
 
     Returns:
-        List[BrowseRecord]: List of matching books
+        Tuple of (List[BrowseRecord], total_count | None): Matching books and total result count
 
     Raises:
         SearchUnavailableError: If Anna's Archive cannot be reached
@@ -752,10 +768,11 @@ def search_books(query: str, filters: SearchFilters) -> list[BrowseRecord]:
     # AA gates /search behind a DDoS-Guard JS challenge, which every mirror shares. Rotating
     # to another mirror only collects another 403, so let the bypasser solve it.
     html, tbody = _fetch_search_table(url, selector)
+    total_count = _extract_total_results_from_html(html) if tbody is not None else None
     if tbody is None:
         if "No files found." in html:
             logger.info("No books found for query: %s", query)
-            return []
+            return ([], None)
         logger.warning("No results table found for query: %s", query)
         msg = "No books found. Please try another query."
         raise RuntimeError(msg)
@@ -791,7 +808,7 @@ def search_books(query: str, filters: SearchFilters) -> list[BrowseRecord]:
     if books:
         _enrich_search_results_with_downloads(books)
 
-    return books
+    return (books, total_count)
 
 
 def _fetch_download_count_inline(book_id: str) -> int | None:
@@ -1897,10 +1914,15 @@ class AnnasArchiveProvider:
 
     def __init__(self) -> None:
         self._last_search_type = "title_author"
+        self._total_results: int | str | None = None
 
     @property
     def last_search_type(self) -> str:
         return self._last_search_type
+
+    @property
+    def total_results(self) -> int | str | None:
+        return self._total_results
 
     def is_enabled(self) -> bool:
         from shelfmark.core import mirrors
@@ -1940,8 +1962,9 @@ class AnnasArchiveProvider:
         search_label: str,
     ) -> list[BrowseRecord]:
         """Retry AA queries without a language filter when filtered search returns nothing."""
-        results = search_books(query, filters)
+        results, total_count = self._search_books(query, filters)
         if results or not filters.lang:
+            self._total_results = total_count
             return results
 
         logger.debug(
@@ -1949,7 +1972,17 @@ class AnnasArchiveProvider:
             search_label,
             filters.lang,
         )
-        return search_books(query, replace(filters, lang=None))
+        results, total_count = self._search_books(query, replace(filters, lang=None))
+        self._total_results = total_count
+        return results
+
+    def _search_books(
+        self,
+        query: str,
+        filters: SearchFilters,
+    ) -> tuple[list[BrowseRecord], int | None]:
+        """Call search_books and capture the total result count."""
+        return search_books(query, filters)
 
     def search(
         self,
@@ -2019,10 +2052,11 @@ class AnnasArchiveProvider:
                 filters = SearchFilters(isbn=[isbn])
                 filters.lang = lang_filter if lang_filter is not None else []
                 try:
-                    results = search_books(isbn, filters)
+                    results, isbn_total = search_books(isbn, filters)
                     if results:
                         logger.info("Found %s releases via ISBN", len(results))
                         self._last_search_type = "isbn"
+                        self._total_results = isbn_total
                         return results
                     logger.debug("No ISBN results, falling back to title+author")
                 except SearchUnavailableError:
@@ -2052,7 +2086,9 @@ class AnnasArchiveProvider:
             logger.debug("Searching direct_download: title_author='%s', langs=%s", query, langs)
             filters = SearchFilters(lang=langs if langs is not None else [])
             try:
-                for bi in search_books(query, filters):
+                books, title_total = search_books(query, filters)
+                self._total_results = title_total
+                for bi in books:
                     if bi.id not in seen_ids:
                         seen_ids.add(bi.id)
                         all_results.append(bi)
@@ -2079,7 +2115,8 @@ class AnnasArchiveProvider:
 
                 logger.debug("Searching direct_download: title_author='%s', langs=[]", query)
                 try:
-                    for bi in search_books(query, SearchFilters()):
+                    books, _ = search_books(query, SearchFilters())
+                    for bi in books:
                         if bi.id not in seen_ids:
                             seen_ids.add(bi.id)
                             all_results.append(bi)

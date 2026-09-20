@@ -53,6 +53,8 @@ interface UseSearchReturn {
   isLoadingMore: boolean;
   loadMore: (config: AppConfig | null, searchMode?: SearchMode) => Promise<void>;
   totalFound: number;
+  // Direct mode: total result count from release sources (e.g., "500+" for capped)
+  directTotalResults: number | string | null;
   // Source URL and title for the current result set (e.g. Hardcover list page)
   resultsSourceUrl: string | undefined;
   resultsSourceTitle: string | undefined;
@@ -92,6 +94,8 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [totalFound, setTotalFound] = useState(0);
+  // Direct mode: total result count from release sources (e.g., Anna's Archive)
+  const [directTotalResults, setDirectTotalResults] = useState<number | string | null>(null);
   const [resultsSourceUrl, setResultsSourceUrl] = useState<string | undefined>();
   const [resultsSourceTitle, setResultsSourceTitle] = useState<string | undefined>();
 
@@ -274,7 +278,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
       setLastSearchQuery(query);
 
       try {
-        const results = await searchBooks(query);
+        const { books: results, totalResults } = await searchBooks(query);
 
         if (results.length > 0) {
           // When no explicit server-side sort is selected (empty or "downloads"),
@@ -284,8 +288,10 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
           const isDownloadsSort = !effectiveSort || effectiveSort === 'downloads';
           const sorted = isDownloadsSort ? sortBooksByDownloads(results) : results;
           setBooks(sorted);
+          setDirectTotalResults(totalResults);
         } else {
           showToast('No results found', 'error');
+          setDirectTotalResults(null);
         }
       } catch (error) {
         if (error instanceof AuthenticationError) {
@@ -335,6 +341,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
       setCurrentPage(1);
       setHasMore(false);
       setTotalFound(0);
+      setDirectTotalResults(null);
       setResultsSourceUrl(undefined);
       setResultsSourceTitle(undefined);
       lastSearchParamsRef.current = null;
@@ -412,6 +419,7 @@ export function useSearch(options: UseSearchOptions): UseSearchReturn {
     isLoadingMore,
     loadMore,
     totalFound,
+    directTotalResults,
     resultsSourceUrl,
     resultsSourceTitle,
   };

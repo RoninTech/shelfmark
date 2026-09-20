@@ -487,6 +487,7 @@ function App() {
     isLoadingMore,
     loadMore,
     totalFound,
+    directTotalResults,
     resultsSourceUrl,
   } = useSearch({
     showToast,
@@ -2607,6 +2608,7 @@ function App() {
               void loadMore(config, effectiveSearchMode);
             }}
             totalFound={totalFound}
+            directTotalResults={directTotalResults}
             onShowToast={showToast}
             resultsSourceUrl={resultsSourceUrl}
           />

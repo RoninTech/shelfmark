@@ -33,6 +33,8 @@ interface ResultsSectionProps {
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
   totalFound?: number;
+  // Direct mode: total result count from release sources
+  directTotalResults?: number | string | null;
   onShowToast?: (message: string, type: 'success' | 'error' | 'info') => void;
   resultsSourceUrl?: string;
 }
@@ -53,6 +55,7 @@ export const ResultsSection = ({
   isLoadingMore,
   onLoadMore,
   totalFound,
+  directTotalResults,
   onShowToast,
   resultsSourceUrl,
 }: ResultsSectionProps) => {
@@ -88,34 +91,54 @@ export const ResultsSection = ({
 
   return (
     <section id="results-section" className="mb-4 w-full sm:mb-8">
-      <div className="relative z-10 mb-2 flex items-center justify-between sm:mb-3">
-        {showSortControl && (
-          <SortControl
-            value={sortValue}
-            onChange={onSortChange}
-            metadataSortOptions={metadataSortOptions}
-          />
-        )}
-        {!showSortControl && resultsSourceUrl && (
-          <a
-            href={resultsSourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="animate-pop-up inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            View list on Hardcover
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              />
-            </svg>
-          </a>
-        )}
+      <div className="relative z-10 mb-2 flex items-center sm:mb-3">
+        {/* Left: Sort control or Hardcover link */}
+        <div>
+          {showSortControl && (
+            <SortControl
+              value={sortValue}
+              onChange={onSortChange}
+              metadataSortOptions={metadataSortOptions}
+            />
+          )}
+          {!showSortControl && resultsSourceUrl && (
+            <a
+              href={resultsSourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="animate-pop-up inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              View list on Hardcover
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+            </a>
+          )}
+        </div>
 
-        {/* View toggle buttons - Desktop: show all 3, Mobile: show Compact and List only */}
+        {/* Center: Results count */}
+        <div className="flex-1 flex justify-center">
+          {(() => {
+            const count = directTotalResults ?? (totalFound && totalFound > 0 ? totalFound : null);
+            if (count === null || count === 0) return null;
+            const isCapped = directTotalResults === '500+';
+            const displayCount = isCapped ? '500+' : String(count);
+            const pages = isCapped ? Math.ceil(500 / 50) : Math.ceil(Number(count) / 50);
+            const downloadStr = (isCapped || Number(count) !== 1) ? 'Downloads' : 'Download';
+            return (
+              <span className="mx-2 mt-4 px-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                Search Returned {displayCount} {downloadStr} in {pages}{isCapped ? '+' : ''} Page{pages !== 1 ? 's' : ''}
+              </span>
+            );
+          })()}
+        </div>
+
+        {/* Right: View toggle buttons - Desktop: show all 3, Mobile: show Compact and List only */}
         <div className="ml-auto flex items-center gap-2">
           {isDesktop && (
             <button
