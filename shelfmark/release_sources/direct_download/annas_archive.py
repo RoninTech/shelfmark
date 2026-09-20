@@ -703,7 +703,7 @@ def _extract_total_results_from_html(html: str) -> int | str | None:
     return None
 
 
-def search_books(query: str, filters: SearchFilters) -> tuple[list[BrowseRecord], int | None]:
+def search_books(query: str, filters: SearchFilters) -> tuple[list[BrowseRecord], int | str | None]:
     """Search for books matching the query.
 
     Args:
@@ -1980,7 +1980,7 @@ class AnnasArchiveProvider:
         self,
         query: str,
         filters: SearchFilters,
-    ) -> tuple[list[BrowseRecord], int | None]:
+    ) -> tuple[list[BrowseRecord], int | str | None]:
         """Call search_books and capture the total result count."""
         return search_books(query, filters)
 
