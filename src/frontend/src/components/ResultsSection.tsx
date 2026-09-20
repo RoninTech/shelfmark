@@ -124,15 +124,23 @@ export const ResultsSection = ({
         {/* Center: Results count */}
         <div className="flex-1 flex justify-center">
           {(() => {
-            const count = directTotalResults ?? (totalFound && totalFound > 0 ? totalFound : null);
+            const count = directTotalResults ?? null;
             if (count === null || count === 0) return null;
             const isCapped = directTotalResults === '500+';
-            const displayCount = isCapped ? '500+' : String(count);
-            const pages = isCapped ? Math.ceil(500 / 50) : Math.ceil(Number(count) / 50);
-            const downloadStr = (isCapped || Number(count) !== 1) ? 'Downloads' : 'Download';
+            const totalCount = isCapped ? 500 : Number(count);
+            // AA-style: show page range + total
+            if (totalCount === 1) {
+              return (
+                <span className="mx-2 mt-4 px-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                  Result 1 (1 Total)
+                </span>
+              );
+            }
+            const shownEnd = Math.min(totalCount, 50);
+            const totalStr = isCapped ? '500+' : String(totalCount);
             return (
               <span className="mx-2 mt-4 px-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                Search Returned {displayCount} {downloadStr} in {pages}{isCapped ? '+' : ''} Page{pages !== 1 ? 's' : ''}
+                Results 1-{shownEnd} ({totalStr} Total)
               </span>
             );
           })()}

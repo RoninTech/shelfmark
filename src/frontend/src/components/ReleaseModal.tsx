@@ -1808,12 +1808,20 @@ const ReleaseModalSession = ({
                       const totalCount = searchInfo?.total_results;
                       if (totalCount === undefined || totalCount === null || totalCount === 0) return null;
                       const isCapped = totalCount === '500+';
-                      const displayCount = isCapped ? '500+' : String(totalCount);
-                      const pages = isCapped ? Math.ceil(500 / 50) : Math.ceil(Number(totalCount) / 50);
-                      const downloadStr = (isCapped || Number(totalCount) !== 1) ? 'Downloads' : 'Download';
+                      const totalCountNum = isCapped ? 500 : Number(totalCount);
+                      // AA-style: show page range + total
+                      if (totalCountNum === 1) {
+                        return (
+                          <span className="mx-2 shrink-0 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                            Result 1 (1 Total)
+                          </span>
+                        );
+                      }
+                      const shownEnd = Math.min(totalCountNum, 50);
+                      const totalStr = isCapped ? '500+' : String(totalCountNum);
                       return (
                         <span className="mx-2 shrink-0 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                          Search Returned {displayCount} {downloadStr} in {pages}{isCapped ? '+' : ''} Page{pages !== 1 ? 's' : ''}
+                          Results 1-{shownEnd} ({totalStr} Total)
                         </span>
                       );
                     })()}
