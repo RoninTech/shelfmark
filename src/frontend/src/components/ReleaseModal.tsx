@@ -1769,7 +1769,7 @@ const ReleaseModalSession = ({
                 </div>
               )}
               {!sourcesLoading && allTabs.length > 0 && (
-                <div className="flex items-center justify-between px-5">
+                <div className="flex items-center px-5">
                   {/* Tabs - scrollable on narrow screens */}
                   <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
                     <div className="relative flex gap-1">
@@ -1801,7 +1801,35 @@ const ReleaseModalSession = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 pr-1 pl-2">
+                  {/* Center: Results count from release sources */}
+                  <div className="flex flex-1 justify-center">
+                    {(() => {
+                      const searchInfo = releasesBySource[activeTab]?.search_info?.[activeTab];
+                      const totalCount = searchInfo?.total_results;
+                      if (totalCount === undefined || totalCount === null || totalCount === 0)
+                        return null;
+                      const isCapped = totalCount === '500+';
+                      const totalCountNum = isCapped ? 500 : Number(totalCount);
+                      // AA-style: show page range + total
+                      if (totalCountNum === 1) {
+                        return (
+                          <span className="mx-2 shrink-0 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
+                            Result 1 (1 Total)
+                          </span>
+                        );
+                      }
+                      const shownEnd = Math.min(totalCountNum, 50);
+                      const totalStr = isCapped ? '500+' : String(totalCountNum);
+                      return (
+                        <span className="mx-2 shrink-0 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
+                          Results 1-{shownEnd} ({totalStr} Total)
+                        </span>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Right: Controls */}
+                  <div className="ml-auto flex items-center gap-3 pr-1 pl-2">
                     {/* Multi-book pack toggle (fallback for releases that can't be inspected) */}
                     {!isCombinedMode && (
                       <button

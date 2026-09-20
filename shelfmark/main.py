@@ -3049,8 +3049,13 @@ def api_releases() -> Response | tuple[Response, int]:
 
         search_info = {}
         for source_name, source_instance in source_instances.items():
+            info: dict[str, str | int | None] = {}
             if hasattr(source_instance, "last_search_type") and source_instance.last_search_type:
-                search_info[source_name] = {"search_type": source_instance.last_search_type}
+                info["search_type"] = source_instance.last_search_type
+            if hasattr(source_instance, "total_results"):
+                info["total_results"] = source_instance.total_results
+            if info:
+                search_info[source_name] = info
 
         response = {
             "releases": releases_data,

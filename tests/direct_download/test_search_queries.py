@@ -33,7 +33,7 @@ class TestDirectDownloadSearchQueries:
 
         def fake_search_books(query: str, filters):
             captured.append(query)
-            return []
+            return ([], None)
 
         _enable_direct_download(monkeypatch)
 
@@ -75,7 +75,7 @@ class TestDirectDownloadSearchQueries:
 
         def fake_search_books(query: str, filters):
             captured.append((query, filters.lang))
-            return records_by_query[query]
+            return (records_by_query[query], None)
 
         _enable_direct_download(monkeypatch)
 
@@ -118,8 +118,8 @@ class TestDirectDownloadSearchQueries:
         def fake_search_books(query: str, filters):
             captured.append((query, filters.lang))
             if filters.lang:
-                return []
-            return fallback_results[query]
+                return ([], None)
+            return (fallback_results[query], None)
 
         _enable_direct_download(monkeypatch)
 
@@ -156,8 +156,8 @@ class TestDirectDownloadSearchQueries:
         def fake_search_books(query: str, filters):
             captured.append((query, filters.lang, filters.format))
             if filters.lang:
-                return []
-            return [_browse_record("manual-1", "Manual result")]
+                return ([], None)
+            return ([_browse_record("manual-1", "Manual result")], None)
 
         _enable_direct_download(monkeypatch)
 
@@ -336,7 +336,7 @@ def test_search_books_filters_locally_when_path_language_enabled(monkeypatch):
 
     monkeypatch.setattr(aa.downloader, "html_get_page", _fake_html_get_page)
 
-    records = aa.search_books("demo", SearchFilters(lang=["fr"], format=["pdf"]))
+    records, _ = aa.search_books("demo", SearchFilters(lang=["fr"], format=["pdf"]))
 
     assert "&lang=" not in captured_url["url"]
     assert len(records) == 1
@@ -380,7 +380,7 @@ def test_search_books_keeps_server_language_matches_when_path_language_disabled(
 
     monkeypatch.setattr(aa.downloader, "html_get_page", _fake_html_get_page)
 
-    records = aa.search_books("demo", SearchFilters(lang=["en"], format=["pdf"]))
+    records, _ = aa.search_books("demo", SearchFilters(lang=["en"], format=["pdf"]))
 
     # AA already narrowed by &lang=; its free-text language cells must not be re-matched.
     assert "&lang=en" in captured_url["url"]

@@ -99,7 +99,7 @@ def test_title_variants_stop_once_the_budget_is_spent(monkeypatch):
         deadline = search_deadline.current()
         if deadline is not None:
             deadline.event.set()
-        return []
+        return ([], None)
 
     monkeypatch.setattr(aa, "search_books", fake_search_books)
     monkeypatch.setattr(aa, "ensure_available", lambda: None)
@@ -114,7 +114,7 @@ def test_title_variants_stop_once_the_budget_is_spent(monkeypatch):
 
 def test_all_title_variants_run_within_budget(monkeypatch):
     queries: list[str] = []
-    monkeypatch.setattr(aa, "search_books", lambda q, _f: queries.append(q) or [])
+    monkeypatch.setattr(aa, "search_books", lambda q, _f: queries.append(q) or ([], None))
     monkeypatch.setattr(aa, "ensure_available", lambda: None)
 
     source = dd.DirectDownloadSource()
@@ -135,7 +135,7 @@ def test_language_filter_retry_is_skipped_on_a_spent_budget(monkeypatch):
             deadline = search_deadline.current()
             if deadline is not None:
                 deadline.event.set()
-        return []
+        return ([], None)
 
     monkeypatch.setattr(aa, "search_books", fake_search_books)
     monkeypatch.setattr(aa, "ensure_available", lambda: None)

@@ -288,6 +288,7 @@ export function useReleaseSearchSession(
               [tabName]: {
                 ...existing,
                 releases: [...existing.releases, ...mergedReleases],
+                search_info: response.search_info,
               },
             };
           });

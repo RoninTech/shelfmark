@@ -279,14 +279,20 @@ async function fetchJSON<T>(
 }
 
 // API functions
-export const searchBooks = async (query: string): Promise<Book[]> => {
-  if (!query) return [];
+export const searchBooks = async (
+  query: string,
+): Promise<{ books: Book[]; totalResults: number | string | null }> => {
+  if (!query) return { books: [], totalResults: null };
   const response = await fetchJSON<ReleasesResponse>(
     `${API_BASE}/releases?source=direct_download&${query}`,
     {},
     searchTimeoutMs,
   );
-  return response.releases.map(transformReleaseToDirectBook);
+  // Extract total count from search_info if available
+  const firstSource = response.sources_searched?.[0];
+  const searchInfo = firstSource ? response.search_info?.[firstSource] : undefined;
+  const totalResults = searchInfo?.total_results ?? null;
+  return { books: response.releases.map(transformReleaseToDirectBook), totalResults };
 };
 
 // Metadata search response type (internal)

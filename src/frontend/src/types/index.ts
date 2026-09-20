@@ -475,6 +475,7 @@ export interface Release {
 // Search info returned by release sources
 export interface SourceSearchInfo {
   search_type: 'isbn' | 'title_author' | 'categories' | 'expanded' | 'manual' | 'query';
+  total_results?: number | string | null;
 }
 
 // Response from /api/releases endpoint
