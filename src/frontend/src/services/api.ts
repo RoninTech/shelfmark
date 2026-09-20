@@ -279,7 +279,9 @@ async function fetchJSON<T>(
 }
 
 // API functions
-export const searchBooks = async (query: string): Promise<{ books: Book[]; totalResults: number | string | null }> => {
+export const searchBooks = async (
+  query: string,
+): Promise<{ books: Book[]; totalResults: number | string | null }> => {
   if (!query) return { books: [], totalResults: null };
   const response = await fetchJSON<ReleasesResponse>(
     `${API_BASE}/releases?source=direct_download&${query}`,

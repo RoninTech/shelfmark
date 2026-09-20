@@ -114,7 +114,7 @@ def test_title_variants_stop_once_the_budget_is_spent(monkeypatch):
 
 def test_all_title_variants_run_within_budget(monkeypatch):
     queries: list[str] = []
-    monkeypatch.setattr(aa, "search_books", lambda q, _f: (queries.append(q) or ([], None)))
+    monkeypatch.setattr(aa, "search_books", lambda q, _f: queries.append(q) or ([], None))
     monkeypatch.setattr(aa, "ensure_available", lambda: None)
 
     source = dd.DirectDownloadSource()

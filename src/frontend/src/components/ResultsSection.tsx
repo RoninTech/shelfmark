@@ -122,7 +122,7 @@ export const ResultsSection = ({
         </div>
 
         {/* Center: Results count */}
-        <div className="flex-1 flex justify-center">
+        <div className="flex flex-1 justify-center">
           {(() => {
             const count = directTotalResults ?? null;
             if (count === null || count === 0) return null;
@@ -131,7 +131,7 @@ export const ResultsSection = ({
             // AA-style: show page range + total
             if (totalCount === 1) {
               return (
-                <span className="mx-2 mt-4 px-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                <span className="mx-2 mt-4 px-2 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
                   Result 1 (1 Total)
                 </span>
               );
@@ -139,7 +139,7 @@ export const ResultsSection = ({
             const shownEnd = Math.min(totalCount, 50);
             const totalStr = isCapped ? '500+' : String(totalCount);
             return (
-              <span className="mx-2 mt-4 px-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+              <span className="mx-2 mt-4 px-2 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
                 Results 1-{shownEnd} ({totalStr} Total)
               </span>
             );
