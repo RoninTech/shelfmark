@@ -2,7 +2,7 @@
 services:
   shelfmark-dev:
     extends:
-      file: ./compose/shelfmark.yml
+      file: ./compose/docker-compose.yml
       service: shelfmark
     build:
       context: .
