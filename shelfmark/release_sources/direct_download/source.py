@@ -116,6 +116,12 @@ class DirectDownloadSource(ReleaseSource):
         provider = registry.provider_by_id("annas_archive", self._providers)
         return getattr(provider, "total_results", None)
 
+    @property
+    def filtered_out_count(self) -> int:
+        """Returns the number of results filtered out by language."""
+        provider = registry.provider_by_id("annas_archive", self._providers)
+        return getattr(provider, "filtered_out_count", 0)
+
     def get_column_config(self) -> ReleaseColumnConfig:
         """Column configuration for Direct Download source.
 

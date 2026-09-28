@@ -1826,23 +1826,30 @@ const ReleaseModalSession = ({
                     {(() => {
                       const searchInfo = releasesBySource[activeTab]?.search_info?.[activeTab];
                       const totalCount = searchInfo?.total_results;
+                      const filteredOut = searchInfo?.filtered_out_count as number | undefined;
                       if (totalCount === undefined || totalCount === null || totalCount === 0)
                         return null;
                       const isCapped = totalCount === '500+';
                       const totalCountNum = isCapped ? 500 : Number(totalCount);
                       // AA-style: show page range + total
                       if (totalCountNum === 1) {
+                        const filterSuffix = filteredOut && filteredOut > 0
+                          ? `/${filteredOut} filtered`
+                          : '';
                         return (
                           <span className="mx-2 shrink-0 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
-                            Result 1 (1 Total)
+                            Result 1 (1 Total{filterSuffix})
                           </span>
                         );
                       }
                       const shownEnd = Math.min(totalCountNum, filteredReleases.length);
                       const totalStr = isCapped ? '500+' : String(totalCountNum);
+                      const filterSuffix = filteredOut && filteredOut > 0
+                        ? `/${filteredOut} filtered`
+                        : '';
                       return (
                         <span className="mx-2 shrink-0 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          Results 1-{shownEnd} ({totalStr} Total)
+                          Results 1-{shownEnd} ({totalStr} Total{filterSuffix})
                         </span>
                       );
                     })()}
