@@ -51,6 +51,19 @@ def _extract_downloads(record: BrowseRecord) -> int | None:
     return downloads
 
 
+def _extract_stars(record: BrowseRecord) -> int | None:
+    """Extract star rating from record info for Release.extra.stars."""
+    stars = None
+    if record.info and "Stars" in record.info:
+        stars_value = record.info["Stars"]
+        if isinstance(stars_value, list) and len(stars_value) > 0:
+            with contextlib.suppress(ValueError, TypeError):
+                stars = int(stars_value[0])
+        elif isinstance(stars_value, (int, float)):
+            stars = int(stars_value)
+    return stars
+
+
 def _browse_record_to_release(record: BrowseRecord) -> Release:
     """Convert a browse record to a Release object.
 
@@ -82,6 +95,7 @@ def _browse_record_to_release(record: BrowseRecord) -> Release:
             "info": record.info,
             "direct_download_provider": provider_id,
             "downloads": _extract_downloads(record),
+            "stars": _extract_stars(record),
             # Kept for older frontends and persisted request payloads.
             "web_provider": provider_id if provider_id != "annas_archive" else None,
         },

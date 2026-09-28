@@ -58,6 +58,7 @@ export interface Book {
   username?: string;
   retry_available?: boolean;
   downloads?: number;
+  stars?: number;
   extra?: Record<string, unknown>;
 }
 
@@ -72,6 +73,21 @@ export function getDownloadsCount(book: Book): number | null {
   const extraDownloads = book.extra?.downloads;
   if (extraDownloads != null && typeof extraDownloads === 'number' && extraDownloads > 0) {
     return extraDownloads;
+  }
+  return null;
+}
+
+/**
+ * Extract star rating from a book's data.
+ * Checks both the direct `stars` field and the `extra.stars` fallback.
+ */
+export function getStarCount(book: Book): number | null {
+  if (book.stars != null && book.stars > 0) {
+    return book.stars;
+  }
+  const extraStars = book.extra?.stars;
+  if (extraStars != null && typeof extraStars === 'number' && extraStars > 0) {
+    return extraStars;
   }
   return null;
 }

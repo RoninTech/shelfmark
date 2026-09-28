@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useSearchMode } from '../../contexts/SearchModeContext';
 import type { Book, ButtonStateInfo, DisplayField } from '../../types';
-import { getDownloadsCount } from '../../types';
+import { getDownloadsCount, getStarCount } from '../../types';
 import { bookSupportsTargets } from '../../utils/bookTargetLoader';
 import { getFormatColor, getLanguageColor } from '../../utils/colorMaps';
 import { BookActionButton } from '../BookActionButton';
@@ -299,7 +299,10 @@ export const ListView = ({
                   <div className="hidden justify-center text-xs text-gray-700 sm:flex dark:text-gray-200">
                     {(() => {
                       const d = getDownloadsCount(book);
-                      return d != null && d > 0 ? d.toLocaleString() : '-';
+                      const s = getStarCount(book);
+                      if (d == null || d <= 0) return '-';
+                      const text = s != null && s > 0 ? `${d.toLocaleString()}/⭐${s}` : d.toLocaleString();
+                      return text;
                     })()}
                   </div>
                 )}

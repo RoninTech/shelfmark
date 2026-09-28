@@ -858,19 +858,22 @@ def search_books(
     return (books, total_count, raw_page_count)
 
 
-def _fetch_download_count_inline(book_id: str) -> int | None:
-    """Fetch the download count for a single book from Anna's Archive inline_info API."""
+def _fetch_download_count_inline(book_id: str) -> tuple[int | None, int | None]:
+    """Fetch the download count and star rating for a single book from inline_info API.
+
+    Returns a tuple of (downloads_total, great_quality_count), each possibly None.
+    """
     try:
         url = f"{network.get_aa_base_url()}/dyn/md5/inline_info/{book_id}"
         resp = requests.get(url, timeout=5, headers={"Accept": "application/json"})
         if resp.status_code == 200:
             data = resp.json()
-            count = data.get("downloads_total")
-            if count is not None:
-                return count
+            downloads = data.get("downloads_total")
+            stars = data.get("great_quality_count")
+            return (downloads, stars)
     except Exception:
         logger.debug("Failed to fetch download count for %s", book_id, exc_info=True)
-    return None
+    return (None, None)
 
 
 def _enrich_search_results_with_downloads(books: list[BrowseRecord]) -> None:
@@ -889,14 +892,17 @@ def _enrich_search_results_with_downloads(books: list[BrowseRecord]) -> None:
 
     # Fetch counts in parallel using the inline_info API (cheaper than summary)
     counts: dict[str, int] = {}
+    stars: dict[str, int] = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = {executor.submit(_fetch_download_count_inline, bid): bid for bid in book_ids}
         for future in concurrent.futures.as_completed(futures):
             bid = futures[future]
             try:
-                count = future.result()
-                if count is not None:
-                    counts[bid] = count
+                download_count, star_count = future.result()
+                if download_count is not None:
+                    counts[bid] = download_count
+                if star_count is not None:
+                    stars[bid] = star_count
             except Exception:
                 logger.debug("Failed to fetch download count for %s", bid, exc_info=True)
 
@@ -914,6 +920,10 @@ def _enrich_search_results_with_downloads(books: list[BrowseRecord]) -> None:
             if book.info is None:
                 book.info = {}
             book.info["Downloads"] = [str(counts[book.id])]
+        if book.id in stars:
+            if book.info is None:
+                book.info = {}
+            book.info["Stars"] = [str(stars[book.id])]
 
 
 def get_book_info(book_id: str, *, fetch_download_count: bool = True) -> BrowseRecord:
