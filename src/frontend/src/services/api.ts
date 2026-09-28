@@ -292,8 +292,12 @@ export const searchBooks = async (
   const firstSource = response.sources_searched?.[0];
   const searchInfo = firstSource ? response.search_info?.[firstSource] : undefined;
   const totalResults = searchInfo?.total_results ?? null;
-  const filteredOutCount = (searchInfo?.filtered_out_count as number) ?? 0;
-  return { books: response.releases.map(transformReleaseToDirectBook), totalResults, filteredOutCount };
+  const filteredOutCount = searchInfo?.filtered_out_count ?? 0;
+  return {
+    books: response.releases.map(transformReleaseToDirectBook),
+    totalResults,
+    filteredOutCount,
+  };
 };
 
 // Metadata search response type (internal)

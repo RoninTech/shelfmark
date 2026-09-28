@@ -887,7 +887,8 @@ def _enrich_search_results_with_downloads(books: list[BrowseRecord]) -> None:
 
     _enrich_t0 = time.perf_counter()
     logger.debug(
-        "Fetching download counts for %d books via inline_info", len(book_ids),
+        "Fetching download counts for %d books via inline_info",
+        len(book_ids),
     )
 
     # Fetch counts in parallel using the inline_info API (cheaper than summary)
@@ -2015,9 +2016,7 @@ class AnnasArchiveProvider:
         enriched once after the last page is fetched.
         """
         seen_ids: set[str] = set()
-        all_results: list[BrowseRecord] = (
-            list(first_page_results) if first_page_results else []
-        )
+        all_results: list[BrowseRecord] = list(first_page_results) if first_page_results else []
         if first_page_results:
             for bi in first_page_results:
                 seen_ids.add(bi.id)
@@ -2162,12 +2161,16 @@ class AnnasArchiveProvider:
                 max_pages = min(aa_page_limit, 10)  # reasonable default when total is unknown
 
             results = self._search_books_paginated(
-                query, filters_used, total_pages=max_pages,
+                query,
+                filters_used,
+                total_pages=max_pages,
                 first_page_results=results,
             )
             _elapsed = time.perf_counter() - _search_t0
             logger.info(
-                "AA provider search complete: %d records in %.2fs", len(results), _elapsed,
+                "AA provider search complete: %d records in %.2fs",
+                len(results),
+                _elapsed,
             )
             return results
 
@@ -2189,7 +2192,9 @@ class AnnasArchiveProvider:
                         self._total_results = isbn_total
                         self._filtered_out_count = isbn_raw - len(results)
                         logger.info(
-                            "AA provider search complete: %d records in %.2fs", len(results), _elapsed,
+                            "AA provider search complete: %d records in %.2fs",
+                            len(results),
+                            _elapsed,
                         )
                         return results
                     logger.debug("No ISBN results, falling back to title+author")
@@ -2299,7 +2304,9 @@ class AnnasArchiveProvider:
                             for page_num in range(2, max_pages + 1):
                                 if search_deadline.expired():
                                     break
-                                books, _, raw_count = self._search_books(query, SearchFilters(), page=page_num)
+                                books, _, raw_count = self._search_books(
+                                    query, SearchFilters(), page=page_num
+                                )
                                 for bi in books:
                                     if bi.id not in seen_ids:
                                         seen_ids.add(bi.id)
@@ -2314,6 +2321,8 @@ class AnnasArchiveProvider:
         self._filtered_out_count = filtered_out
         _elapsed = time.perf_counter() - _search_t0
         logger.info(
-            "AA provider search complete: %d records in %.2fs", len(all_results), _elapsed,
+            "AA provider search complete: %d records in %.2fs",
+            len(all_results),
+            _elapsed,
         )
         return all_results

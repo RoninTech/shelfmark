@@ -118,7 +118,12 @@ export const DetailsModal = ({
         { label: 'Format', value: book.format || '-' },
         { label: 'Size', value: book.size || '-' },
         ...(downloadCount
-          ? [{ label: 'Downloads', value: `${Number(downloadCount).toLocaleString()}${starCount ? ` / ⭐${starCount}` : ''}` }]
+          ? [
+              {
+                label: 'Downloads',
+                value: `${Number(downloadCount).toLocaleString()}${starCount ? ` / ⭐${starCount}` : ''}`,
+              },
+            ]
           : []),
       ];
 

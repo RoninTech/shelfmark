@@ -132,9 +132,8 @@ export const ResultsSection = ({
             const totalCount = isCapped ? 500 : Number(count);
             // AA-style: show page range + total
             if (totalCount === 1) {
-              const filterSuffix = directFilteredOut && directFilteredOut > 0
-                ? `/${directFilteredOut} filtered`
-                : '';
+              const filterSuffix =
+                directFilteredOut && directFilteredOut > 0 ? `/${directFilteredOut} filtered` : '';
               return (
                 <span className="mx-2 mt-4 px-2 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
                   Result 1 (1 Total{filterSuffix})
@@ -143,9 +142,8 @@ export const ResultsSection = ({
             }
             const shownEnd = Math.min(totalCount, books.length);
             const totalStr = isCapped ? '500+' : String(totalCount);
-            const filterSuffix = directFilteredOut && directFilteredOut > 0
-              ? `/${directFilteredOut} filtered`
-              : '';
+            const filterSuffix =
+              directFilteredOut && directFilteredOut > 0 ? `/${directFilteredOut} filtered` : '';
             return (
               <span className="mx-2 mt-4 px-2 text-xs whitespace-nowrap text-gray-500 dark:text-gray-400">
                 Results 1-{shownEnd} ({totalStr} Total{filterSuffix})

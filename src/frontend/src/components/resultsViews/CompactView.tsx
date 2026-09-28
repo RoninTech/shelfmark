@@ -228,7 +228,8 @@ export const CompactView = ({
                 const d = getDownloadsCount(book);
                 const s = getStarCount(book);
                 if (d == null || d <= 0) return null;
-                const text = s != null && s > 0 ? `${d.toLocaleString()}/⭐${s}` : d.toLocaleString();
+                const text =
+                  s != null && s > 0 ? `${d.toLocaleString()}/⭐${s}` : d.toLocaleString();
                 return (
                   <>
                     {' '}
